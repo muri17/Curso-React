@@ -1,5 +1,5 @@
-import { AppBar, Avatar, Grid, IconButton, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
-import { AccountCircle, LogoutOutlined, MenuOutlined } from '@mui/icons-material';
+import { AppBar, Avatar, Badge, Grid, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography } from '@mui/material';
+import { AccountCircle, Favorite, LogoutOutlined, MenuOutlined, Star } from '@mui/icons-material';
 import { AuthContext } from '../../auth';
 import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -20,12 +20,20 @@ export const NavBar = ({ drawerWidth = 240 }) => {
     }
 
     const handleMenu = (event) => {
-        setAnchorEl(event.currentTarget);
-      };
-    
-      const handleClose = () => {
-        setAnchorEl(null);
-      };
+      setAnchorEl(event.currentTarget);
+    };
+  
+    const handleClose = () => {
+      setAnchorEl(null);
+    };  
+
+    const onClickAgregar = () => {
+      navigate('/recetas/agregar');
+    }
+
+    const onClickHome = () => {
+      navigate('/recetas');
+    }
 
   return (
     <AppBar 
@@ -36,21 +44,17 @@ export const NavBar = ({ drawerWidth = 240 }) => {
          }}
     >
         <Toolbar>
-            <IconButton
-                color='inherit'
-                edge="start"
-                sx={{ mr: 2, display: { sm: 'none' } }}
-            >
-                <MenuOutlined />
-            </IconButton>
-
             <Grid container direction='row' justifyContent='space-between' alignItems='center'>
-                <Typography variant='h4' noWrap component='div'> Recipies App </Typography>
+                <Typography variant='h4' noWrap component='div' onClick={ onClickHome } sx={{cursor: 'pointer'}} > Recetas </Typography>
 
-                {/* <IconButton color='error' onClick={onLogout}>
-                    <LogoutOutlined />
-                </IconButton> */}
-                    <div>
+                {/* <Tooltip title="Ver favoritos">
+                  <IconButton size="large"  color="inherit">
+                    <Badge badgeContent={4} color="error" >
+                      <Favorite />
+                    </Badge>
+                  </IconButton>
+                </Tooltip> */}
+              <div>
               <IconButton
                 size="large"
                 aria-label="account of current user"
@@ -76,9 +80,9 @@ export const NavBar = ({ drawerWidth = 240 }) => {
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
               >
-                <MenuItem>{user.email}</MenuItem>
-                {/* <MenuItem onClick={handleClose}>Profile</MenuItem> */}
-                <MenuItem onClick={onLogout}>Cerrar sesion </MenuItem>
+                <Typography sx={{ ml: 2, mr: 2}}>{user.email}</Typography>
+                <MenuItem onClick={ onClickAgregar }>Agregar receta </MenuItem>
+                <MenuItem onClick={ onLogout }>Cerrar sesion </MenuItem>
               </Menu>
             </div>
             </Grid>

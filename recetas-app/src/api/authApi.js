@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = 'https://backend-recipes-bootcamps-tribe-production.up.railway.app/api/auth'
+const baseUrl = 'https://backend-recipes-bootcamps-tribe.onrender.com/api/auth'
 
 export const login = (email, password) => axios({
   
@@ -21,7 +21,7 @@ export const login = (email, password) => axios({
   })
 
     // Handle the response from backend here
-    .then((res) => { return res.data })
+    .then((res) => { return res })
 
     // Catch errors if any
     .catch((err) => { return err });

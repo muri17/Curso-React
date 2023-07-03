@@ -22,30 +22,67 @@ export const AuthProvider = ({ children }) => {
     
   const [ authState, dispatch ] = useReducer( authReducer, {}, init );
 
-  const login = async ( email, password ) => {
+  const login = async (email, password) => {
 
+    let action
+    let errores = []
     const resp = await loginApi(email, password)
-    const user = resp
-    const action = { 
-      type: types.login, 
-      payload: user 
-    }
 
-    localStorage.setItem('user', JSON.stringify( user ) );
-    localStorage.setItem('idToken', JSON.stringify( user.idToken ) );
+    if (resp.status != 200) {
+      if (resp.response.data.error == undefined) {
+        errores = resp.response.data.errors
+      } else {
+        errores.push({msg: resp.response.data.error.message})
+      }
+      action = { 
+        type: types.loginError,
+        payload: errores };
+    } else {
+      const user = resp.data
+      localStorage.setItem('user', JSON.stringify( user ) );
+      localStorage.setItem('idToken', JSON.stringify( user.idToken ) );
+      action = { 
+        type: types.login, 
+        payload: user 
+      }
+    }
+ 
 
     dispatch(action);
   }
 
   const logout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('idToken');
     const action = { type: types.logout };
     dispatch(action);
   }
 
   const signup = async (email, password) => {
+    let action
+    let errores = []
     const resp = await signupApi(email, password)
-    const action = { type: types.signup };
+
+    if (resp.status != 200) {
+      if (resp.response.data.error == undefined) {
+        errores = resp.response.data.errors
+      } else {
+        errores.push({msg: resp.response.data.error.message})
+      }
+      action = { 
+        type: types.signupError,
+        payload: errores };
+    } else {
+      action = { 
+        type: types.signup };
+    }
+    dispatch(action);
+  }
+
+  const favorites = () => {
+    const action = { 
+      type: types.favorite,
+      payload: [] };
     dispatch(action);
   }
 
@@ -58,6 +95,7 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       signup,
+      favorites
     }}>
         { children }
     </AuthContext.Provider>

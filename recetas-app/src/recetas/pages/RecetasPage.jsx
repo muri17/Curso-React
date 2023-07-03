@@ -1,28 +1,32 @@
-import { Avatar, Button, Grid, InputAdornment, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, TextField, Typography } from "@mui/material"
+import { Alert, Avatar, Button, Grid, IconButton, InputAdornment, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, Snackbar, TextField, Tooltip, Typography } from "@mui/material"
 import { RecetasLayout } from "../layout/RecetasLayout"
-import { getRecetas } from "../../api/recipesApi"
-import {  Add, Delete, Edit, Search, Circle } from "@mui/icons-material"
+import { eliminarReceta, getRecetas } from "../../api/recipesApi"
+import {  Add, Delete, Edit, Search, HorizontalRule, Favorite, FavoriteBorderOutlined } from "@mui/icons-material"
 import { useContext, useEffect, useState } from "react"
 import { AuthContext } from "../../auth"
-import { Navigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 export const RecetasPage = () => {
 
   const [recetas = [], setRecetas] = useState([]);
-  const [selectedIndex, setSelectedIndex] = useState(1);
+  const [recetasGeneral = [], setRecetasGeneral] = useState([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [recetaSelected, setRecetaSelected] = useState();
-  const { logout } = useContext( AuthContext )
+  const { logout, favorites } = useContext( AuthContext );
+  const navigate = useNavigate();
+  const [ open, setOpen ] = useState(false);
+  const [ searchValue, setSearchValue ] = useState('');
+  const [ favoritos = [], setfavoritos ] = useState([]);
 
   const onGetRecetas = async () => {
     const resp = await getRecetas()
     if (resp.length >= 0 ) {
       setRecetas(resp)
+      setRecetasGeneral(resp)
     }
     if (resp.response?.status == 401) {
       onLogout()
     }  
-  
-    console.log(resp)
   }
 
   const handleListItemClick = (event, index, item) => {
@@ -30,12 +34,62 @@ export const RecetasPage = () => {
     setRecetaSelected(item);
   };
 
+  const onClickAgregar = () => {
+    navigate('/recetas/agregar');
+  }
+
+  const onClickEliminar = async () => {
+    const resp = await eliminarReceta(selectedIndex)
+    if (resp.msg) {
+      onGetRecetas()
+      setRecetaSelected(null);
+      handleClick()
+    }
+  }
+
+  const onClickEditar = async () => {
+    localStorage.setItem('recetaSelected', JSON.stringify( recetaSelected ) );
+    navigate('/recetas/agregar');
+  }
+
   const onLogout = () => {
     logout();
-    Navigate('auth/login', {
+    navigate('auth/login', {
         replace: true
     });
   }
+
+  const onClickAgregarFav = () => {
+    setfavoritos([...favoritos,  recetaSelected]) 
+  }
+
+  const onClickVerFav = () => {
+    setfavoritos([...favoritos,  recetaSelected]) 
+  }
+
+  const onInputChange = ({ target }) => {
+    setSearchValue( target.value );
+    if (target.value == "") {
+      setRecetas(recetasGeneral)
+      return;
+    }
+    const reset = recetasGeneral
+    const search = reset.filter(item => item.name.toLowerCase().includes(target.value.toLowerCase()));
+    setRecetas(search)
+    setRecetaSelected();
+}
+
+  const handleClick = () => {
+    setOpen(true);
+  };
+
+  const handleClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpen(false);
+  };
 
   useEffect(() => {
     onGetRecetas()
@@ -52,12 +106,15 @@ export const RecetasPage = () => {
                     placeholder='Buscar' 
                     fullWidth
                     InputProps={{
-                      endAdornment: (
-                        <InputAdornment position='end' >
+                      startAdornment: (
+                        <InputAdornment position='start' >
                           <Search />
                         </InputAdornment>
                       ),
                     }}
+                    name="search"
+                    value={ searchValue }
+                    onChange={ onInputChange }
                   />
                 </Grid>
 
@@ -92,21 +149,21 @@ export const RecetasPage = () => {
 
                 <Grid container spacing={ 2 } sx={{ mb: 2, mt: 1 }}>
                   <Grid item xs={ 12 } sm={ 4 }>
-                    <Button variant='contained' fullWidth>
-                      <Delete />
-                      <Typography sx={{ ml: 1 }}>Eliminar</Typography>
+                    <Button disabled={selectedIndex == 0} variant='contained' color="error" fullWidth onClick={ onClickEliminar }
+                        startIcon={<Delete />}>
+                          Eliminar
                     </Button>
                   </Grid>
                   <Grid item xs={ 12 } sm={ 4 }>
-                    <Button variant='contained' fullWidth>
-                      <Edit />
-                      <Typography sx={{ ml: 1 }}>Editar</Typography>
+                    <Button disabled={selectedIndex == 0} variant='contained' color="info" fullWidth onClick={ onClickEditar }
+                        startIcon={<Edit />}>
+                          Editar
                     </Button>
                   </Grid>
                   <Grid item xs={ 12 } sm={ 4 }>
-                    <Button variant='contained' fullWidth>
-                      <Add />
-                      <Typography sx={{ ml: 1 }}>Agregar</Typography>
+                    <Button variant='contained' color="success" fullWidth onClick={ onClickAgregar } 
+                        startIcon={<Add />}>
+                          Agregar
                     </Button>
                   </Grid>
                 </Grid>
@@ -118,7 +175,14 @@ export const RecetasPage = () => {
                 {recetaSelected && (
                   <div className="animate__animated animate__fadeIn" >
                     <Grid item xs={ 12 } sx={{ mt: 1 }}>
-                      <Typography variant='h4' noWrap component='div' sx={{ ml: 1, textAlign:"center", mb: 2 }}>{recetaSelected?.name}</Typography>
+                      <Typography variant='h4' noWrap component='div' sx={{ ml: 1, textAlign:"center", mb: 2 }}>{recetaSelected?.name}
+                      {/* <Tooltip title="Agregar favorito">
+                        FavoriteOutlined si esta e fav
+                        <IconButton size="large"  color="error" onClick={ onClickAgregarFav } >
+                          <FavoriteBorderOutlined   /> 
+                        </IconButton>
+                      </Tooltip> */}
+                      </Typography>
                     </Grid>
                     <Grid item xs={ 12 } sx={{ mt: 1 }}>
                       <img height={'100%'} width={'100%'} src={recetaSelected?.imagePath}/>
@@ -130,12 +194,12 @@ export const RecetasPage = () => {
                       <Typography sx={{ ml: 1}}>Ingredientes:</Typography>
                       <List >
                         {recetaSelected.ingredients.length > 0 && recetaSelected.ingredients.map((item) =>(
-                          <ListItem>
-                            <ListItemIcon>
-                              <Circle fontSize="small"/>
-                            </ListItemIcon>
-                            <ListItemText
-                              primary="Single-line item"
+                          <ListItem key={item.name}>
+                             <ListItemIcon>
+                                  <HorizontalRule color="success" fontSize="small"/>
+                              </ListItemIcon>
+                            <ListItemText sx={{ ml: -4 }}
+                              primary={item.name}
                             />
                           </ListItem>
                         ))}
@@ -145,7 +209,13 @@ export const RecetasPage = () => {
                 )} 
               </Grid>
         </Grid>
-    </RecetasLayout>
 
+        <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} 
+            anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
+            <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }} >
+              Receta eliminada
+            </Alert>
+          </Snackbar>
+    </RecetasLayout>
   )
 }

@@ -16,10 +16,20 @@ export const useForm = ( initialForm = {} ) => {
         setFormState( initialForm );
     }
 
+    const onInputClean = (name) => {
+        const  value = '' ;
+        setFormState({
+            ...formState,
+            [ name ]: value
+        });
+    }
+
     return {
         ...formState,
         formState,
         onInputChange,
         onResetForm,
+        setFormState,
+        onInputClean
     }
 }

@@ -1,14 +1,15 @@
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Button, Grid, Link, TextField, Typography } from '@mui/material';
+import { Alert, Button, Grid, Link, ListItem, TextField, Typography } from '@mui/material';
 import { AuthLayout } from '../layout/AuthLayout';
 import { useForm } from '../../hooks';
 import { AuthContext } from "../context";
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 export const LoginPage = () => {
 
-  const { login } = useContext( AuthContext )
+  const { login, error } = useContext( AuthContext )
   const navigate = useNavigate();
+  const [show, setShow] = useState(true)
 
   const { email, password, onInputChange } = useForm({
     email: 'murua5@hotmail.com',
@@ -27,9 +28,17 @@ export const LoginPage = () => {
     });
   }
 
+  const limpiarErrores = () => {
+    setShow(false)
+  }
+
+  useEffect(() => {
+    setShow(!show)
+  }, [error])
+
   return (
     <AuthLayout title="Login">
-      <form onSubmit={ onSubmit }>
+      <form onSubmit={ onSubmit } aria-label='submit-form'>
           <Grid container>
             <Grid item xs={ 12 } sx={{ mt: 2 }}>
               <TextField 
@@ -50,10 +59,19 @@ export const LoginPage = () => {
                 placeholder='Contraseña' 
                 fullWidth
                 name="password"
+                inputProps={ {
+                 'data-testid': 'password'
+                }}
                 value={ password }
                 onChange={ onInputChange }
               />
             </Grid>
+
+            {error && error.map((item) => (
+                  <Grid key={item.msg} item xs={ 12 } sx={{ mt: 2, display: show ? '' : 'none' }}>
+                    <Alert severity="error">{item?.msg}</Alert>
+                  </Grid>
+             ))}
             
             <Grid container spacing={ 2 } sx={{ mb: 2, mt: 1 }}>
               <Grid item xs={ 12 }>
@@ -65,7 +83,7 @@ export const LoginPage = () => {
 
 
             <Grid container direction='row' justifyContent='end'>
-              <Link component={ RouterLink } color='inherit' to="/auth/register">
+              <Link component={ RouterLink } color='inherit' to="/auth/register" onClick={ limpiarErrores } >
                 Crear una cuenta
               </Link>
             </Grid>
